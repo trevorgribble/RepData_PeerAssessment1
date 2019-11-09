@@ -8,7 +8,8 @@ output:
 ## Loading and preprocessing the data
 
 There are 288 5-minute intervals and they are initially set up as military time integers, which end abruptly when the 10s digits get to 55 before resetting to 0.  This will cause issues in our plotting so we must reset them to increment regularly.
-```{r loadingchunk, echo=TRUE}
+
+```r
 activitydata<-read.csv(unz("activity.zip", "activity.csv"))
 activitydata$interval <- ((activitydata$interval%/%100)*12)+((activitydata$interval%%100)/5)
 ```
@@ -16,7 +17,8 @@ activitydata$interval <- ((activitydata$interval%/%100)*12)+((activitydata$inter
 ## What is mean total number of steps taken per day?
 
 First, Calculate the total number of steps per day using dplyr package
-```{r totalstepsperday, echo=TRUE, message=FALSE}
+
+```r
 library(dplyr)
 StepsPerDay <- activitydata %>% 
         group_by(Date=date) %>% 
@@ -24,30 +26,47 @@ StepsPerDay <- activitydata %>%
 ```
 
 Histogram displaying Total Steps Per Day
-```{r histogramstepsperday, echo=TRUE}
+
+```r
 hist(StepsPerDay$TotalSteps, 
      breaks=20, 
      xlab="Total Steps Per Day", 
      main="Histogram of Total Steps Per Day (20 buckets)")
 ```
 
+![](PA1_template_files/figure-html/histogramstepsperday-1.png)<!-- -->
+
 Mean & Median Steps Per Day
-```{r meanmedianstepsperday, echo=TRUE}
+
+```r
 mean(StepsPerDay$TotalSteps)
+```
+
+```
+## [1] 9354.23
+```
+
+```r
 median(StepsPerDay$TotalSteps)
+```
+
+```
+## [1] 10395
 ```
 
 ## What is the average daily activity pattern?
 
 First, Calculate the average number of steps per 5 minute interval using dplyr package
-```{r averagestepsperinterval, echo=TRUE}
+
+```r
 AvgStepsPerInterval <- activitydata %>% 
         group_by(Interval=interval) %>% 
         summarise(AverageSteps=mean(steps, na.rm=TRUE))
 ```
 
 Make a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
-```{r timeseriesplot, echo=TRUE}
+
+```r
 plot(AvgStepsPerInterval$Interval,
      AvgStepsPerInterval$AverageSteps, 
      type="l",
@@ -56,8 +75,11 @@ plot(AvgStepsPerInterval$Interval,
      main="Average Number of Steps Taken per 5-minute interval")
 ```
 
+![](PA1_template_files/figure-html/timeseriesplot-1.png)<!-- -->
+
 Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
-```{r maxintervalofsteps, echo=TRUE}
+
+```r
 fiveminuteinterval <- AvgStepsPerInterval[which.max(AvgStepsPerInterval$AverageSteps),"Interval"]
 minuteofday<-fiveminuteinterval*5
 hourofday<-minuteofday%/%60
@@ -66,21 +88,37 @@ minuteofhour<-minuteofday%%60
 paste0("The 5-Minute interval which averages the max number of steps is #",fiveminuteinterval,". This corresponds to the 5 minutes beginning at ", hourofday,":",minuteofhour," (24-hr time)")
 ```
 
+```
+## [1] "The 5-Minute interval which averages the max number of steps is #103. This corresponds to the 5 minutes beginning at 8:35 (24-hr time)"
+```
+
 
 ## Imputing missing values
 
 Calculate and report the total number of missing values in the dataset
-```{r missingvaluessum, echo=TRUE}
+
+```r
 sum(is.na(activitydata$steps))
 ```
 
+```
+## [1] 2304
+```
+
 If there is an NA value in the dataset, use the mean for that 5-minute interval to replace it. This will create a new dataset that is equal to the original dataset but with the missing data filled in.
-```{r fillinmissingdata, echo=TRUE}
+
+```r
 activitydatafull <- activitydata
 
 ##new dataset (with NA values prior to imputing)
 sum(is.na(activitydatafull$steps))
+```
 
+```
+## [1] 2304
+```
+
+```r
 for(row in 1:nrow(activitydatafull)){
         if(is.na(activitydatafull$steps[row])){
                 activitydatafull$steps[row] <- AvgStepsPerInterval[which(AvgStepsPerInterval$Interval==activitydatafull$interval[row]),"AverageSteps"]
@@ -90,9 +128,13 @@ for(row in 1:nrow(activitydatafull)){
 sum(is.na(activitydatafull$steps))
 ```
 
-Make a histogram of the total number of steps taken each day
-```{r newhistogram, echo=TRUE}
+```
+## [1] 0
+```
 
+Make a histogram of the total number of steps taken each day
+
+```r
 activitydatafull$steps <- as.numeric(activitydatafull$steps)
 
 StepsPerDayFull <- activitydatafull %>% 
@@ -105,10 +147,24 @@ hist(StepsPerDayFull$TotalSteps,
      main="Histogram of Total Steps Per Day with full dataset (20 buckets)")
 ```
 
+![](PA1_template_files/figure-html/newhistogram-1.png)<!-- -->
+
 Calculate and report the mean and median total number of steps taken per day. 
-```{r newmeanandmedian, echo=TRUE}
+
+```r
 mean(StepsPerDayFull$TotalSteps)
+```
+
+```
+## [1] 10766.19
+```
+
+```r
 median(StepsPerDayFull$TotalSteps)
+```
+
+```
+## [1] 10766.19
 ```
 
 
@@ -122,7 +178,8 @@ Yes, imputing the average values in all of the NA values has skewed the complete
 
 Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
 
-```{r dayofweekappend, echo=TRUE}
+
+```r
 activitydatafull$dayofweek <- weekdays(as.Date(activitydatafull$date))
 
 activitydatafull$dayofweek <- ifelse(activitydatafull$dayofweek %in% c("Saturday", "Sunday"), "weekend", "weekday")
@@ -133,8 +190,17 @@ activitydatafull$dayofweek<-as.factor(activitydatafull$dayofweek)
 str(activitydatafull)
 ```
 
+```
+## 'data.frame':	17568 obs. of  4 variables:
+##  $ steps    : num  1.717 0.3396 0.1321 0.1509 0.0755 ...
+##  $ date     : Factor w/ 61 levels "2012-10-01","2012-10-02",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ interval : num  0 1 2 3 4 5 6 7 8 9 ...
+##  $ dayofweek: Factor w/ 2 levels "weekday","weekend": 1 1 1 1 1 1 1 1 1 1 ...
+```
+
 Make a panel plot containing a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).
-```{r weekendweekdayplot, echo=TRUE}
+
+```r
 library(lattice)
 
 AvgStepsPerIntervalFull <- activitydatafull %>% 
@@ -149,4 +215,6 @@ xyplot(AverageSteps~Interval|DayOfWeek,
        ylab="Average Steps", 
        xlab="5-Minute Interval")
 ```
+
+![](PA1_template_files/figure-html/weekendweekdayplot-1.png)<!-- -->
 
