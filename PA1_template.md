@@ -7,11 +7,21 @@ output:
 
 ## Loading and preprocessing the data
 
-There are 288 5-minute intervals and they are initially set up as military time integers, which end abruptly when the 10s digits get to 55 before resetting to 0.  This will cause issues in our plotting so we must reset them to increment regularly.
 
 ```r
 activitydata<-read.csv(unz("activity.zip", "activity.csv"))
+```
+
+There are 288 5-minute intervals and they are initially set up as military time integers, which end abruptly when the 10s digits get to 55 before resetting to 0.  This will cause issues in our plotting so we must reset them to increment regularly.
+
+```r
 activitydata$interval <- ((activitydata$interval%/%100)*12)+((activitydata$interval%%100)/5)
+```
+
+For our initial data, we are ignoring the days with NA values in the steps (removing them from the dataset), rather than just converting them to a zero value
+
+```r
+activitydatanoNA <- activitydata[complete.cases(activitydata),]
 ```
 
 ## What is mean total number of steps taken per day?
@@ -20,9 +30,9 @@ First, Calculate the total number of steps per day using dplyr package
 
 ```r
 library(dplyr)
-StepsPerDay <- activitydata %>% 
+StepsPerDay <- activitydatanoNA %>% 
         group_by(Date=date) %>% 
-        summarise(TotalSteps=sum(steps,na.rm = TRUE))
+        summarise(TotalSteps=sum(steps))
 ```
 
 Histogram displaying Total Steps Per Day
@@ -43,7 +53,7 @@ mean(StepsPerDay$TotalSteps)
 ```
 
 ```
-## [1] 9354.23
+## [1] 10766.19
 ```
 
 ```r
@@ -51,7 +61,7 @@ median(StepsPerDay$TotalSteps)
 ```
 
 ```
-## [1] 10395
+## [1] 10765
 ```
 
 ## What is the average daily activity pattern?
@@ -59,9 +69,9 @@ median(StepsPerDay$TotalSteps)
 First, Calculate the average number of steps per 5 minute interval using dplyr package
 
 ```r
-AvgStepsPerInterval <- activitydata %>% 
+AvgStepsPerInterval <- activitydatanoNA %>% 
         group_by(Interval=interval) %>% 
-        summarise(AverageSteps=mean(steps, na.rm=TRUE))
+        summarise(AverageSteps=mean(steps))
 ```
 
 Make a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
@@ -95,7 +105,7 @@ paste0("The 5-Minute interval which averages the max number of steps is #",fivem
 
 ## Imputing missing values
 
-Calculate and report the total number of missing values in the dataset
+Calculate and report the total number of missing values in the original dataset
 
 ```r
 sum(is.na(activitydata$steps))
@@ -171,7 +181,7 @@ median(StepsPerDayFull$TotalSteps)
 Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
 ```
-Yes, imputing the average values in all of the NA values has skewed the complete dataset to a much more central average.  All of the initially empty days that read total steps=0 are now instead set to the sum of average steps per interval, thus they are all the same at 10766.19.  This also shifts the median to the same value as the mean. Finally, because NA data that was initially converted to zero is now non-zero, the mean and median have both risen accordingly
+Yes, imputing the average values in all of the NA values has skewed the complete dataset to a much more central average.  All of the initially empty days that were ignored are now all equal to the sum of average steps per interval, thus they are all the same at 10766.19.  This also shifts the median to the same value as the mean because the average steps per interval that we imputed were non-integer. 
 ```
 
 ## Are there differences in activity patterns between weekdays and weekends?
